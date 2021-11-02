@@ -4,14 +4,37 @@ void serial_task(void *pvParameter)
 {
     while (1)
     {
-        auto num = esp_random();
+        static int saw = 0;
+        saw++;
+
+        int num = esp_random() % 100;
+        if (saw == 100)
+        {
+            saw = 0;
+        }
+
         cJSON *root = cJSON_CreateObject();
         cJSON_AddNumberToObject(root, "num", num);
+        cJSON_AddNumberToObject(root, "saw", saw);
+
+        if (num <= 40)
+        {
+            cJSON_AddStringToObject(root, "info", "Low");
+        }
+        else if (num >= 80)
+        {
+            cJSON_AddStringToObject(root, "info", "Hi");
+        }
+        else
+        {
+            cJSON_AddStringToObject(root, "info", "Ok");
+        }
+
         xSemaphoreTake(mutex, portMAX_DELAY);
         std::cout << cJSON_PrintUnformatted(root) << std::endl;
         xSemaphoreGive(mutex);
         cJSON_Delete(root);
-        vTaskDelay(1000 / portTICK_RATE_MS);
+        vTaskDelay(2000 / portTICK_RATE_MS);
     }
 }
 
